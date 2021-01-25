@@ -6,6 +6,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import org.opencv.*;
+
 import com.app.R;
 import com.app.activitys.Bluetooth.BluetoothDeviceListActivity;
 
