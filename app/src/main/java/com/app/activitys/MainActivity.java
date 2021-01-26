@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClick_Stop(View view) {
         seekBarSpeed.setProgress(1000);
-        seekBarSteering.setProgress(100);
+        seekBarSteering.setProgress(105);
 
         orb.setMotor(0, ORB.Mode.POWER, 0, 0);
         orb.setMotor(1, ORB.Mode.POWER, 0, 0);

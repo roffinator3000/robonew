@@ -307,7 +307,8 @@ public class JavaCamera2View extends CameraBridgeViewBase {
             mFrameHeight = mPreviewSize.getHeight();
 
             if ((getLayoutParams().width == LayoutParams.MATCH_PARENT) && (getLayoutParams().height == LayoutParams.MATCH_PARENT))
-                mScale = Math.min(((float)height)/mFrameHeight, ((float)width)/mFrameWidth);
+//                mScale = Math.min(((float)height)/mFrameHeight, ((float)width)/mFrameWidth);
+                mScale = Math.max(((float)height)/mFrameHeight, ((float)width)/mFrameWidth);
             else
                 mScale = 0;
 
