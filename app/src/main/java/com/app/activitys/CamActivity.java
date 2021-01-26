@@ -1,18 +1,11 @@
 package com.app.activitys;
 
-import android.graphics.Bitmap;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SurfaceView;
-import android.view.View;
-import android.widget.ImageView;
-
-import org.opencv.*;
-
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -40,10 +33,9 @@ import java.util.Vector;
 import static java.lang.Math.round;
 import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.inRange;
+import static org.opencv.imgproc.Imgproc.COLOR_HSV2BGR;
+import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
 import static org.opencv.imgproc.Imgproc.CV_HOUGH_GRADIENT;
-import static org.opencv.imgproc.Imgproc.GaussianBlur;
-import static org.opencv.imgproc.Imgproc.HoughCircles;
-import static org.opencv.imgproc.Imgproc.circle;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 public class CamActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -51,12 +43,12 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     private static String TAG = "CamActivity";
     JavaCameraView javaCameraView;
 
-    Mat mRGBA, mRGBAT, hsvImg, hsvImgT;
+    Mat mRGBA, mBGR, hsvImg, hsvImgT;
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status) {
+            switch(status) {
                 case BaseLoaderCallback.SUCCESS: {
                     javaCameraView.enableView();
                     break;
@@ -68,17 +60,12 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         }
     };
 
-    //    static
-//    {
-//
-//        if(OpenCVLoader.initDebug())
-//        {
+//    static {
+//        if(OpenCVLoader.initDebug()) {
 //            Log.d(TAG, "YESSSSSSSS");
-//        }
-//        else{
+//        } else {
 //            Log.d(TAG, "NOOOOOOOOOOOOOOOOO");
 //        }
-//
 //    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,8 +82,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if (javaCameraView != null) {
+        if(javaCameraView != null) {
             javaCameraView.disableView();
         }
     }
@@ -118,12 +104,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
-
-
     }
 
-
-    //---------------------------------------------------------------
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -138,8 +120,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-
         mRGBA = new Mat(width, height, CvType.CV_8UC4);
+        mBGR = new Mat(width, height, CvType.CV_8UC3);
         hsvImg = new Mat(width, height, CvType.CV_8UC3);
     }
 
@@ -150,28 +132,17 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
-
-//        Mat hsv = img.clone();
-//        Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
-//        Core.inRange(hsv, lowerBlue, upperBlue, hsv); //hsv
-//
-
         mRGBA = inputFrame.rgba();
-//
-//        mRGBAT = mRGBA.t();
-//        Core.flip(mRGBA.t(), mRGBAT.t(),0);
-//        Imgproc.resize(mRGBA,mRGBAT, mRGBA.size());
-//
-//        return mRGBAT;
+        cvtColor(mRGBA, hsvImg, COLOR_RGB2HSV);
 
-        return mRGBA;
+
+
+        cvtColor(hsvImg, mBGR, COLOR_HSV2BGR);
+        return mBGR;    // needs to be in BRG
     }
-
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
-
 }
