@@ -39,7 +39,11 @@ import java.util.Vector;
 
 import static java.lang.Math.round;
 import static org.opencv.core.Core.addWeighted;
+import static org.opencv.core.Core.bitwise_and;
+import static org.opencv.core.Core.bitwise_not;
+import static org.opencv.core.Core.bitwise_or;
 import static org.opencv.core.Core.inRange;
+import static org.opencv.imgproc.Imgproc.COLOR_BGR2HSV;
 import static org.opencv.imgproc.Imgproc.CV_HOUGH_GRADIENT;
 import static org.opencv.imgproc.Imgproc.GaussianBlur;
 import static org.opencv.imgproc.Imgproc.HoughCircles;
@@ -51,7 +55,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     private static String TAG = "CamActivity";
     JavaCameraView javaCameraView;
 
-    Mat mRGBA, mRGBAT, hsvImg, hsvImgT;
+    Mat mRGBA, mBGR, hsvImg, hsvImgT;
+    Mat mask, maskU, maskL;
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
         @Override
@@ -138,9 +143,14 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-
         mRGBA = new Mat(width, height, CvType.CV_8UC4);
-        hsvImg = new Mat(width, height, CvType.CV_8UC3);
+        mBGR = new Mat(width, height, CvType.CV_8UC4);
+        hsvImg = new Mat(width, height, CvType.CV_8UC4);
+        hsvImgT = new Mat(width, height, CvType.CV_8UC4);
+
+        mask = new Mat(width, height, CvType.CV_8UC4);
+        maskU = new Mat(width, height, CvType.CV_8UC4);
+        maskL = new Mat(width, height, CvType.CV_8UC4);
     }
 
     @Override
@@ -150,28 +160,28 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
-
-//        Mat hsv = img.clone();
-//        Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
-//        Core.inRange(hsv, lowerBlue, upperBlue, hsv); //hsv
-//
-
         mRGBA = inputFrame.rgba();
-//
-//        mRGBAT = mRGBA.t();
-//        Core.flip(mRGBA.t(), mRGBAT.t(),0);
-//        Imgproc.resize(mRGBA,mRGBAT, mRGBA.size());
-//
-//        return mRGBAT;
+        cvtColor(mRGBA, hsvImg, COLOR_BGR2HSV);
 
-        return mRGBA;
+        Scalar scalarLow = getHsvScalar(10,2,3);
+        Scalar scalarHigh = getHsvScalar(350,100,97);
+
+        Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
+        bitwise_not(mask, maskL);
+
+        bitwise_and(mRGBA, mRGBA, hsvImg, maskL);
+
+//        cvtColor(hsvImgT, mBGR, COLOR_HSV2RGB);
+//        return mBGR;
+        return hsvImg;
     }
 
+    private Scalar getHsvScalar(double H, double S, double V) {
+        return new Scalar(((int)(H/360.0*255.0)), ((int)(S*2.55)), ((int)(V*2.55)));
+    }
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
-
 }
