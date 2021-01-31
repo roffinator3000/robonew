@@ -1,56 +1,39 @@
 package com.app.activitys;
 
-import android.graphics.Bitmap;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SurfaceView;
-import android.view.View;
-import android.widget.ImageView;
-
-import org.opencv.*;
 
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCamera2View;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 
 import com.app.R;
 import com.app.activitys.Bluetooth.BluetoothDeviceListActivity;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.List;
-import java.util.Vector;
 
 import static java.lang.Math.round;
 import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.bitwise_and;
 import static org.opencv.core.Core.bitwise_not;
 import static org.opencv.core.Core.bitwise_or;
-import static org.opencv.core.Core.inRange;
 import static org.opencv.imgproc.Imgproc.COLOR_BGR2HSV;
-import static org.opencv.imgproc.Imgproc.COLOR_HSV2BGR;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2BGR;
-import static org.opencv.imgproc.Imgproc.CV_HOUGH_GRADIENT;
+import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
 import static org.opencv.imgproc.Imgproc.GaussianBlur;
 import static org.opencv.imgproc.Imgproc.HoughCircles;
 import static org.opencv.imgproc.Imgproc.circle;
 import static org.opencv.imgproc.Imgproc.cvtColor;
+import static org.opencv.imgproc.Imgproc.rectangle;
 
 public class CamActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -58,7 +41,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     JavaCameraView javaCameraView;
 
     Mat mRGBA, mBGR, hsvImg, hsvImgT;
-    Mat mask, maskU, maskL;
+    Mat maskUninv, maskU, mask;
     private boolean togglePic = true;
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
@@ -150,8 +133,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         mBGR = new Mat(width, height, CvType.CV_8UC4);
         hsvImg = new Mat(width, height, CvType.CV_8UC4);
 
+        maskUninv = new Mat(width, height, CvType.CV_8UC4);
         mask = new Mat(width, height, CvType.CV_8UC4);
-        maskL = new Mat(width, height, CvType.CV_8UC4);
     }
 
     @Override
@@ -163,26 +146,29 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         if (togglePic) {
             mRGBA = inputFrame.rgba();
-            cvtColor(mRGBA, hsvImg, COLOR_BGR2HSV);
+            cvtColor(mRGBA, hsvImg, COLOR_RGB2HSV);
+//            cvtColor(mRGBA, hsvImg, COLOR_BGR2HSV);
 
-            Scalar scalarLow = getHsvScalar(10, 2, 3);
-            Scalar scalarHigh = getHsvScalar(350, 100, 97);
+            Scalar scalarLow = getHsvScalar(205, 30, 5);
+            Scalar scalarHigh = getHsvScalar(290, 400, 400);
 
             Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
-            bitwise_not(mask, maskL);
 
+            bitwise_not(mask, mask);                  // zum debuggen
+            bitwise_and(mRGBA, mRGBA, hsvImg, mask);    // farbbild auf filter legen
+//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);  // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
+
+
+            //"schwerpunkt" der erkannten roten flächen berechnen
             int h = mask.rows();
             int w = mask.width();
             int avH = 0;
             int avW = 0;   //average height and width
-            int count = 0;
+            int count = 1;
 
-            for (int i = 0; i<h; i += 5) {
-                for (int ii = 0; ii<w; ii += 5) {
-//                    double[] d = maskL.get(i,ii);
-//                    double e = d[0];
-//                    double f = d[1];
-                    if (0 <maskL.get(i,ii)[0]) {
+            for (int i = 0; i<h; i += 2) {
+                for (int ii = 0; ii<w; ii += 2) {
+                    if (0 < mask.get(i,ii)[0]) {
                     avH += i;
                     avW += ii;
                     ++count;
@@ -192,15 +178,17 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             avH /= count;
             avW /= count;
 
-            int x = 5;
-            for (int i = 0; i<x; i++) {
-                for (int ii = 0; ii<x; ii++) {
+            // ecken um den schwerpunkt setzen
+            double[] aPu = new double[2];
+            aPu[0] = avW - 30;
+            aPu[1] = avH - 30;
+            Point lo = new Point(aPu);
+            aPu[0] = avW + 30;
+            aPu[1] = avH + 30;
+            Point ru = new Point(aPu);
 
-                }
-            }
-
-            bitwise_and(mRGBA, mRGBA, hsvImg, maskL);
-            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);
+            Scalar green = getHsvScalar(140, 100, 100); // ein grünes
+            rectangle(hsvImg, lo, ru, green,3);          // quadrat über das erzeugt bild legen
         }
         togglePic = !togglePic;
         return hsvImg;
