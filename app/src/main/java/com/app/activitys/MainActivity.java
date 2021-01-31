@@ -44,12 +44,14 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    //-----------------------------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         seekBarSpeed = findViewById(R.id.seekBarSpeed);
         seekBarSteering = findViewById(R.id.seekBarSteering);
+
         orb = new ORB();
         orb.init(this, msgHandler, ORB_DATA_RECEIVED_MSG_ID);
         orb.configMotor(0, 144, 50, 50, 30);
@@ -59,14 +61,22 @@ public class MainActivity extends AppCompatActivity {
         seekBarSteering.setOnSeekBarChangeListener((new SeekBarSteering(orb)));
     }
 
+    //-----------------------------------------------------------------
     public void startCamera(View view) {
+        seekBarSpeed.setProgress(1000);
+        seekBarSteering.setProgress(105);
+
+        orb.setMotor(0, ORB.Mode.SPEED, 0, 0);
+        orb.setMotor(1, ORB.Mode.SPEED, 0, 0);
 
         Intent intent = new Intent(this, CamActivity.class);
 ////        Intent intent = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
         startActivity(intent);
+
+
     }
 
-
+    //-----------------------------------------------------------------
     @Override
     public void onDestroy() {
         orb.close();
@@ -84,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
 
     //---------------------------------------------------------------
     @Override
@@ -113,16 +122,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
+    //-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     public void Drive(View view, int x) {
         orb.setMotor(0, ORB.Mode.SPEED, -x, 0);
         orb.setMotor(1, ORB.Mode.SPEED, +x, 0);
     }
 
-    public void onClick_Drive_s(View view) {
-        Drive(view, 250);
-    }
-
+    //-----------------------------------------------------------------
     public void onClick_Stop(View view) {
         seekBarSpeed.setProgress(1000);
         seekBarSteering.setProgress(105);
@@ -131,12 +138,12 @@ public class MainActivity extends AppCompatActivity {
         orb.setMotor(1, ORB.Mode.POWER, 0, 0);
     }
 
-
+    //-----------------------------------------------------------------
     private void setMsg() {
         TextView view;
 
         view = (TextView) findViewById(R.id.msgVoltage);
-        view.setText("Battary:" + String.format("%.1f V", orb.getVcc()));
+        view.setText("Battery:" + String.format("%.1f V", orb.getVcc()));
 
         view = (TextView) findViewById(R.id.msgORB1);
         view.setText("M0:\n" + String.format("%6d\n%6d\n%6d", orb.getMotorSpeed((byte) 0),

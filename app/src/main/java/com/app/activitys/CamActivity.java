@@ -23,6 +23,7 @@ import com.app.activitys.Bluetooth.BluetoothDeviceListActivity;
 import static org.opencv.core.Core.bitwise_and;
 import static org.opencv.core.Core.bitwise_not;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
+
 import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.rectangle;
 
@@ -35,8 +36,16 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     Mat mRGBA, mBGR, hsvImg, hsvImgT;
     Mat mask;
+    Scalar scalarLow = getHsvScalar(205, 30, 5);
+    Scalar scalarHigh = getHsvScalar(290, 400, 400);
+    Scalar rectColor;
+    Point lo = new Point(new double[] {0,0});
+    Point ru = new Point(new double[] {60,60});
+
+    int picWidth, picHeight;
     private boolean togglePic = true;
 
+    //-----------------------------------------------------------------
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
         @Override
         public void onManagerConnected(int status) {
@@ -52,6 +61,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         }
     };
 
+    //-----------------------------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,8 +72,12 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         javaCameraView.setMaxFrameSize(1280, 720);
 
         javaCameraView.setCvCameraViewListener(this);
+
+        scalarLow = getHsvScalar(205, 30, 5);
+        scalarHigh = getHsvScalar(290, 400, 400);
     }
 
+    //-----------------------------------------------------------------
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -73,6 +87,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         }
     }
 
+    //-----------------------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();
@@ -86,12 +101,14 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         }
     }
 
+    //-----------------------------------------------------------------
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
+    //-----------------------------------------------------------------
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -104,6 +121,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         return super.onOptionsItemSelected(item);
     }
 
+    //-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRGBA = new Mat(width, height, CvType.CV_8UC4);
@@ -113,38 +132,44 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         mask = new Mat(width, height, CvType.CV_8UC4);
     }
 
+    //-----------------------------------------------------------------
     @Override
     public void onCameraViewStopped() {
         mRGBA.release();
         mBGR.release();
         hsvImg.release();
         mask.release();
+
+        mySeekBarSpeed.setSpeed(0);
+        mySeekBarSpeed.setSteering(0);
+        mySeekBarSpeed.refresh();
     }
 
+    //-----------------------------------------------------------------
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+
         if (togglePic) {
+
             mRGBA = inputFrame.rgba();
             cvtColor(mRGBA, hsvImg, COLOR_RGB2HSV);
 
-            Scalar scalarLow = getHsvScalar(205, 30, 5);
-            Scalar scalarHigh = getHsvScalar(290, 400, 400);
-
             Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
 
+
             //"schwerpunkt" der erkannten roten flächen berechnen
-            int picHeight = mask.rows();
-            int picWeight = mask.width();
-            int avgHeight = 0;
-            int avgWidth = 0;   // average height and width
-            int count = 1;      // init mit 1 um divideByZeroException zu vermeiden
+            picHeight       = mask.rows();
+            picWidth        = mask.cols();
+            int avgHeight   = 0;
+            int avgWidth    = 0;  // average height and width
+            int count       = 1;  // init mit 1 um divideByZeroException zu vermeiden
 
             for (int i = 0; i< picHeight; i += 4) {
-                for (int ii = 0; ii< picWeight; ii += 4) {
+                for (int ii = 0; ii< picWidth; ii += 4) {
                     if (0 < mask.get(i,ii)[0]) {
-                    avgHeight += i;
-                    avgWidth += ii;
-                    ++count;
+                        avgHeight += i;
+                        avgWidth += ii;
+                        ++count;
                     }
                 }
             }
@@ -153,57 +178,58 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             avgWidth /= count;
 
             // ecken um den schwerpunkt setzen
-            double[] aPu = new double[2];
-            aPu[0] = avgWidth - 30;
-            aPu[1] = avgHeight - 30;
-            Point lo = new Point(aPu);
-            aPu[0] = avgWidth + 30;
-            aPu[1] = avgHeight + 30;
-            Point ru = new Point(aPu);
+            lo.set( new double[]{ avgWidth - 30, avgHeight - 30 });
+            ru.set( new double[]{ avgWidth + 30, avgHeight + 30 });
 
-            Scalar green;   // für overlay-quadrat
             if (50 < count) {    // neue fahrtrichtung nur setzen, wenn nennenswerte menge an punkten gefunden wurde
-                drive(picWeight, picHeight, avgWidth, avgHeight);
-                green = new Scalar(20, 200, 50);   // für overlay-quadrat: funktioniert -> gruen
-            } else {
-                green = new Scalar(250, 30, 40);   // funktioniert nicht -> rot
+                drive(avgWidth, avgHeight);
+                rectColor = getHsvScalar(20,200,50);
             }
+            else{
+                rectColor= getHsvScalar(250, 30, 40);
+            }
+//            bitwise_not(mask, mask);                              // zum debuggen, um *nicht* erkannte bereiche zu sehen
+            bitwise_and(mRGBA, mRGBA, hsvImg, mask);// farbbild auf filter legen
+//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);              // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
 
-//            bitwise_not(mask, mask);                    // zum debuggen, um *nicht* erkannte bereiche zu sehen
-            bitwise_and(mRGBA, mRGBA, hsvImg, mask);      // farbbild auf filter legen
-//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);    // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
+            rectangle(hsvImg, lo, ru, rectColor,3);       // quadrat über das erzeugte bild legen
 
-            rectangle(hsvImg, lo, ru, green,3);           // quadrat über das erzeugte bild legen
         }
-        togglePic = !togglePic;
+
         return hsvImg;
     }
 
+    //-----------------------------------------------------------------
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
+
+    //-----------------------------------------------------------------
     private Scalar getHsvScalar(double H, double S, double V) {
         // konvertiert normale HSV-Scalare (360,100,100) in OpenCV-HSV-Scalare (255,255,255)
         return new Scalar(((int)(H/360.0*255.0)), ((int)(S*2.55)), ((int)(V*2.55)));
     }
 
-    private void drive(int width, int height, int avgWidht, int avgHeight){
-        int steer = (int)( avgHeight * 200.0  / height );
-        int speed = (int)( avgWidht  * 1000.0 / width  );
+    private void drive(int avgWidht, int avgHeight){
+        int steer = (int)( avgHeight * 200.0  / picHeight );
+        int speed = (int)( avgWidht  * 1000.0 / picWidth  );
         speed -= 1000;
         speed *= -1;
 
         speed *= 2;
 
-        System.out.println("speed: " + speed + "  steer: " + (steer-100) + "  height: " + height + "  width: " + width);
+        System.out.println("speed: " + speed + "  steer: " + (steer-100) + "  height: " + picHeight + "  width: " + picWidth);
 
         mySeekBarSpeed.setSpeed(speed);
         mySeekBarSpeed.setSteering(steer -100);    // -100 um bei 0 grade aus zu fahren
         mySeekBarSpeed.refresh();
     }
 
+    //-----------------------------------------------------------------
     static public void setMySeekBarSpeed(com.app.activitys.SeekBarSpeed sbs){
         mySeekBarSpeed = sbs;
     }
 
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-    }
+
 }
