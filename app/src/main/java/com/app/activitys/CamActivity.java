@@ -44,6 +44,8 @@ import static org.opencv.core.Core.bitwise_not;
 import static org.opencv.core.Core.bitwise_or;
 import static org.opencv.core.Core.inRange;
 import static org.opencv.imgproc.Imgproc.COLOR_BGR2HSV;
+import static org.opencv.imgproc.Imgproc.COLOR_HSV2BGR;
+import static org.opencv.imgproc.Imgproc.COLOR_RGB2BGR;
 import static org.opencv.imgproc.Imgproc.CV_HOUGH_GRADIENT;
 import static org.opencv.imgproc.Imgproc.GaussianBlur;
 import static org.opencv.imgproc.Imgproc.HoughCircles;
@@ -57,6 +59,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     Mat mRGBA, mBGR, hsvImg, hsvImgT;
     Mat mask, maskU, maskL;
+    private boolean togglePic = true;
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
         @Override
@@ -146,10 +149,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         mRGBA = new Mat(width, height, CvType.CV_8UC4);
         mBGR = new Mat(width, height, CvType.CV_8UC4);
         hsvImg = new Mat(width, height, CvType.CV_8UC4);
-        hsvImgT = new Mat(width, height, CvType.CV_8UC4);
 
         mask = new Mat(width, height, CvType.CV_8UC4);
-        maskU = new Mat(width, height, CvType.CV_8UC4);
         maskL = new Mat(width, height, CvType.CV_8UC4);
     }
 
@@ -160,19 +161,48 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        mRGBA = inputFrame.rgba();
-        cvtColor(mRGBA, hsvImg, COLOR_BGR2HSV);
+        if (togglePic) {
+            mRGBA = inputFrame.rgba();
+            cvtColor(mRGBA, hsvImg, COLOR_BGR2HSV);
 
-        Scalar scalarLow = getHsvScalar(10,2,3);
-        Scalar scalarHigh = getHsvScalar(350,100,97);
+            Scalar scalarLow = getHsvScalar(10, 2, 3);
+            Scalar scalarHigh = getHsvScalar(350, 100, 97);
 
-        Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
-        bitwise_not(mask, maskL);
+            Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
+            bitwise_not(mask, maskL);
 
-        bitwise_and(mRGBA, mRGBA, hsvImg, maskL);
+            int h = mask.rows();
+            int w = mask.width();
+            int avH = 0;
+            int avW = 0;   //average height and width
+            int count = 0;
 
-//        cvtColor(hsvImgT, mBGR, COLOR_HSV2RGB);
-//        return mBGR;
+            for (int i = 0; i<h; i += 5) {
+                for (int ii = 0; ii<w; ii += 5) {
+//                    double[] d = maskL.get(i,ii);
+//                    double e = d[0];
+//                    double f = d[1];
+                    if (0 <maskL.get(i,ii)[0]) {
+                    avH += i;
+                    avW += ii;
+                    ++count;
+                    }
+                }
+            }
+            avH /= count;
+            avW /= count;
+
+            int x = 5;
+            for (int i = 0; i<x; i++) {
+                for (int ii = 0; ii<x; ii++) {
+
+                }
+            }
+
+            bitwise_and(mRGBA, mRGBA, hsvImg, maskL);
+            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);
+        }
+        togglePic = !togglePic;
         return hsvImg;
     }
 
