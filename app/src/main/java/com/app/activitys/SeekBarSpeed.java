@@ -45,10 +45,6 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
             rightSpeed = (int) (speed * (0.9 - (steering *9 / 10)) );
         }
 
-//        System.out.println("steer: " + steer);
-//        System.out.println("leftSpeed: " + leftSpeed);
-//        System.out.println("rightSpeed: " + rightSpeed);
-
         orb.setMotor( 0, ORB.Mode.SPEED, - leftSpeed,  0);
         orb.setMotor( 1, ORB.Mode.SPEED,   rightSpeed, 0);
     }

@@ -71,30 +71,30 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         mySeekBarSpeed.letItSpin(100);
     }
 
-    //-----------------------------------------------------------------
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         if (javaCameraView != null) {
             javaCameraView.disableView();
         }
+
+        mySeekBarSpeed.setSpeed(0);
+        mySeekBarSpeed.setSteering(0);
+        mySeekBarSpeed.refresh();
+
+        super.onDestroy();
     }
 
-    //-----------------------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();
     }
 
-    //-----------------------------------------------------------------
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
-    //-----------------------------------------------------------------
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
