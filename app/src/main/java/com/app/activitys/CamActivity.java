@@ -28,6 +28,8 @@ import static org.opencv.imgproc.Imgproc.rectangle;
 
 public class CamActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
+    private static com.app.activitys.SeekBarSpeed mySeekBarSpeed;
+
     private static String TAG = "CamActivity";
     JavaCameraView javaCameraView;
 
@@ -159,6 +161,9 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             aPu[1] = avgHeight + 30;
             Point ru = new Point(aPu);
 
+            if (50 < count) {    // neue fahrtrichtung nur setzen, wenn nennenswerte menge an punkten gefunden wurde
+                drive(picWeight, picHeight, avgWidth, avgHeight);
+            }
 
 //            bitwise_not(mask, mask);                    // zum debuggen, um *nicht* erkannte bereiche zu sehen
             bitwise_and(mRGBA, mRGBA, hsvImg, mask);      // farbbild auf filter legen
@@ -175,6 +180,22 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     private Scalar getHsvScalar(double H, double S, double V) {
         // konvertiert normale HSV-Scalare (360,100,100) in OpenCV-HSV-Scalare (255,255,255)
         return new Scalar(((int)(H/360.0*255.0)), ((int)(S*2.55)), ((int)(V*2.55)));
+    }
+
+    private void drive(int width, int height, int avgWidht, int avgHeight){
+        double widhtFactor = (200.0 / width);
+        double heightFactor = (200.0 / height);
+
+        int speed = 0;
+        speed = (int)(height * heightFactor) -100;
+        speed /= 10;
+        mySeekBarSpeed.setSpeed(speed);
+        mySeekBarSpeed.setSteering((int)(width * widhtFactor) -100);    // -100 um bei 0 grade aus zu fahren
+        mySeekBarSpeed.refresh();
+    }
+
+    static public void setMySeekBarSpeed(com.app.activitys.SeekBarSpeed sbs){
+        mySeekBarSpeed = sbs;
     }
 
     @Override

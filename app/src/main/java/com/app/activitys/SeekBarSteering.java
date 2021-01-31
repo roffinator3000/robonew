@@ -23,7 +23,7 @@ public class SeekBarSteering implements SeekBar.OnSeekBarChangeListener{
 
         progress -= 5;          //wegen seitlichen puffern
 
-        mySeekBarSpeed.control(progress-100);    // -100 um bei 0 grade aus zu fahren
+        mySeekBarSpeed.setSteering(progress-100);    // -100 um bei 0 grade aus zu fahren
         mySeekBarSpeed.refresh();
 //        orb.setMotor(0, ORB.Mode.MOVETO, +(progress -750), 0);
 //        orb.setMotor(1, ORB.Mode.MOVETO, -(progress -750), 0);

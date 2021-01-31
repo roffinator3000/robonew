@@ -16,11 +16,12 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
     SeekBarSpeed(ORB orb){
         this.orb = orb;
         SeekBarSteering.setMySeekBarSpeed(this);
+        CamActivity.setMySeekBarSpeed(this);
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        speed = progress - 1000;
+        speed = progress - 2000;
         speed *= 2;
         refresh();
     }
@@ -52,8 +53,12 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
         orb.setMotor( 1, ORB.Mode.SPEED,   rightSpeed, 0);
     }
 
-    static public void control(int steerNew){
+    static public void setSteering(int steerNew){
         steer = steerNew;
+    }
+
+    static public void setSpeed(int speedNew){
+        speed = speedNew;
     }
 
     @Override
