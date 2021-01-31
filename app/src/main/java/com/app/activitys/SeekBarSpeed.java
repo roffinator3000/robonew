@@ -21,8 +21,8 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        speed = progress - 2000;
-        speed *= 2;
+        speed = progress - 1000;
+        speed *= 4;
         refresh();
     }
 

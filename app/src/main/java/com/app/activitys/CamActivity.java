@@ -161,16 +161,18 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             aPu[1] = avgHeight + 30;
             Point ru = new Point(aPu);
 
+            Scalar green;   // für overlay-quadrat
             if (50 < count) {    // neue fahrtrichtung nur setzen, wenn nennenswerte menge an punkten gefunden wurde
                 drive(picWeight, picHeight, avgWidth, avgHeight);
+                green = new Scalar(20, 200, 50);   // für overlay-quadrat: funktioniert -> gruen
+            } else {
+                green = new Scalar(250, 30, 40);   // funktioniert nicht -> rot
             }
 
 //            bitwise_not(mask, mask);                    // zum debuggen, um *nicht* erkannte bereiche zu sehen
             bitwise_and(mRGBA, mRGBA, hsvImg, mask);      // farbbild auf filter legen
 //            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);    // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
 
-
-            Scalar green = getHsvScalar(70, 100, 100);   // ein gruenes
             rectangle(hsvImg, lo, ru, green,3);           // quadrat über das erzeugte bild legen
         }
         togglePic = !togglePic;
@@ -183,14 +185,17 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     }
 
     private void drive(int width, int height, int avgWidht, int avgHeight){
-        double widhtFactor = (200.0 / width);
-        double heightFactor = (200.0 / height);
+        int steer = (int)( avgHeight * 200.0  / height );
+        int speed = (int)( avgWidht  * 1000.0 / width  );
+        speed -= 1000;
+        speed *= -1;
 
-        int speed = 0;
-        speed = (int)(height * heightFactor) -100;
-        speed /= 10;
+        speed *= 2;
+
+        System.out.println("speed: " + speed + "  steer: " + (steer-100) + "  height: " + height + "  width: " + width);
+
         mySeekBarSpeed.setSpeed(speed);
-        mySeekBarSpeed.setSteering((int)(width * widhtFactor) -100);    // -100 um bei 0 grade aus zu fahren
+        mySeekBarSpeed.setSteering(steer -100);    // -100 um bei 0 grade aus zu fahren
         mySeekBarSpeed.refresh();
     }
 
