@@ -154,10 +154,6 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
             Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
 
-            bitwise_not(mask, mask);                  // zum debuggen
-            bitwise_and(mRGBA, mRGBA, hsvImg, mask);    // farbbild auf filter legen
-//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);  // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
-
 
             //"schwerpunkt" der erkannten roten flächen berechnen
             int h = mask.rows();
@@ -166,8 +162,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             int avW = 0;   //average height and width
             int count = 1;
 
-            for (int i = 0; i<h; i += 2) {
-                for (int ii = 0; ii<w; ii += 2) {
+            for (int i = 0; i<h; i += 4) {
+                for (int ii = 0; ii<w; ii += 4) {
                     if (0 < mask.get(i,ii)[0]) {
                     avH += i;
                     avW += ii;
@@ -187,7 +183,13 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             aPu[1] = avH + 30;
             Point ru = new Point(aPu);
 
-            Scalar green = getHsvScalar(140, 100, 100); // ein grünes
+
+//            bitwise_not(mask, mask);                    // zum debuggen, um *nicht* erkannte bereiche zu sehen
+            bitwise_and(mRGBA, mRGBA, hsvImg, mask);      // farbbild auf filter legen
+//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);    // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
+
+
+            Scalar green = getHsvScalar(110, 100, 100); // ein grünes
             rectangle(hsvImg, lo, ru, green,3);          // quadrat über das erzeugt bild legen
         }
         togglePic = !togglePic;
