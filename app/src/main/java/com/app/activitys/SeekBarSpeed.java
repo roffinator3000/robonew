@@ -5,7 +5,7 @@ import android.widget.TextView;
 
 import com.app.activitys.ORB.ORB;
 
-
+//Diese Klasse wandelt den einkommenden SeekBar Wert in einen entsprechenden Wert für den ORB um
 public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
 
     private ORB orb;
@@ -19,6 +19,7 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
         CamActivity.setMySeekBarSpeed(this);
     }
 
+    //wird bei Veränderungen den Seekbar aufgerufen
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         speed = progress - 1000;
@@ -26,6 +27,7 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
         refresh();
     }
 
+    //berechnet und setzt die entsprechende Geschwindkeit des ORBs
     public void refresh() {
         double steering = steer / 100.0;
 

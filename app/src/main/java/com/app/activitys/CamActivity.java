@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -33,7 +34,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     private static String TAG = "CamActivity";
     JavaCameraView javaCameraView;
 
-    Mat mRGBA, mBGR, hsvImg, hsvImgT;
+    Mat mRGBA, mBGR, hsvImg;
     Mat mask;
     Scalar scalarLow = getHsvScalar(205, 30, 5);
     Scalar scalarHigh = getHsvScalar(290, 400, 400);
@@ -65,12 +66,18 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cam);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        //init der OpenCV Kamera
         javaCameraView = findViewById(R.id.CameraView);
         javaCameraView.setVisibility(SurfaceView.VISIBLE);
         javaCameraView.setMaxFrameSize(1280, 720);
-
         javaCameraView.setCvCameraViewListener(this);
+
+        //Lässt Roboter zu beginn drehen um Objekt zu finden
+        mySeekBarSpeed.setSpeed(100);
+        mySeekBarSpeed.setSteering(-100);
+        mySeekBarSpeed.refresh();
     }
 
     //-----------------------------------------------------------------
@@ -183,6 +190,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             } else {
                 rectColor = new Scalar(250, 30, 40);   // funktioniert nicht -> rot
             }
+
 //            bitwise_not(mask, mask);                         // zum debuggen, um *nicht* erkannte bereiche zu sehen
             bitwise_and(mRGBA, mRGBA, hsvImg, mask);           // farbbild auf filter legen
 //            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);         // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
