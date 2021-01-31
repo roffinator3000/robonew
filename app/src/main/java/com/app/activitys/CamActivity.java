@@ -23,7 +23,6 @@ import com.app.activitys.Bluetooth.BluetoothDeviceListActivity;
 import static org.opencv.core.Core.bitwise_and;
 import static org.opencv.core.Core.bitwise_not;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
-
 import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.rectangle;
 
@@ -72,9 +71,6 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         javaCameraView.setMaxFrameSize(1280, 720);
 
         javaCameraView.setCvCameraViewListener(this);
-
-        scalarLow = getHsvScalar(205, 30, 5);
-        scalarHigh = getHsvScalar(290, 400, 400);
     }
 
     //-----------------------------------------------------------------
@@ -159,7 +155,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
             //"schwerpunkt" der erkannten roten flächen berechnen
             picHeight       = mask.rows();
-            picWidth        = mask.cols();
+            picWidth        = mask.width(); //mask.cols();
             int avgHeight   = 0;
             int avgWidth    = 0;  // average height and width
             int count       = 1;  // init mit 1 um divideByZeroException zu vermeiden
@@ -177,52 +173,50 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
             avgHeight /= count;
             avgWidth /= count;
 
-            // ecken um den schwerpunkt setzen
+            // Ecken um den Schwerpunkt setzen
             lo.set( new double[]{ avgWidth - 30, avgHeight - 30 });
             ru.set( new double[]{ avgWidth + 30, avgHeight + 30 });
 
             if (50 < count) {    // neue fahrtrichtung nur setzen, wenn nennenswerte menge an punkten gefunden wurde
                 drive(avgWidth, avgHeight);
-                rectColor = getHsvScalar(20,200,50);
+                rectColor = new Scalar(20, 200, 50);   // für overlay-quadrat: funktioniert -> gruen
+            } else {
+                rectColor = new Scalar(250, 30, 40);   // funktioniert nicht -> rot
             }
-            else{
-                rectColor= getHsvScalar(250, 30, 40);
-            }
-//            bitwise_not(mask, mask);                              // zum debuggen, um *nicht* erkannte bereiche zu sehen
-            bitwise_and(mRGBA, mRGBA, hsvImg, mask);// farbbild auf filter legen
-//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);              // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
+//            bitwise_not(mask, mask);                         // zum debuggen, um *nicht* erkannte bereiche zu sehen
+            bitwise_and(mRGBA, mRGBA, hsvImg, mask);           // farbbild auf filter legen
+//            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);         // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
 
-            rectangle(hsvImg, lo, ru, rectColor,3);       // quadrat über das erzeugte bild legen
-
+            rectangle(hsvImg, lo, ru, rectColor, 3);       // quadrat über das erzeugte bild legen
         }
-
+        togglePic = !togglePic;
         return hsvImg;
     }
 
-    //-----------------------------------------------------------------
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-
-    }
-
-    //-----------------------------------------------------------------
     private Scalar getHsvScalar(double H, double S, double V) {
         // konvertiert normale HSV-Scalare (360,100,100) in OpenCV-HSV-Scalare (255,255,255)
         return new Scalar(((int)(H/360.0*255.0)), ((int)(S*2.55)), ((int)(V*2.55)));
     }
 
     private void drive(int avgWidht, int avgHeight){
-        int steer = (int)( avgHeight * 200.0  / picHeight );
-        int speed = (int)( avgWidht  * 1000.0 / picWidth  );
-        speed -= 1000;
-        speed *= -1;
+        int steer = (int)( avgHeight * 200.0  / picHeight      -100 );     // -100 um bei 0 grade aus zu fahren -> zwischen -100 und 100
+        int speed = (int)( avgWidht  * 1000.0 / picWidth *(-1) +800 );     // -> zwischen -200 und 800
+        // muss auf den kopf gestellt werden, da beim bild (0,0) links oben ist aber links unten benoetigt wird
 
-        speed *= 2;
+        if (-100 > speed) {
+            speed = speed *2 /3;
+        } else if (0 > speed) {
+            speed = 0;
+        } else if (350 < speed) {
+            speed = 700;
+        } else {
+            speed *= 2;
+        }
 
-        System.out.println("speed: " + speed + "  steer: " + (steer-100) + "  height: " + picHeight + "  width: " + picWidth);
+        System.out.println("speed: " + speed + "  steer: " + (steer) + "  height: " + picHeight + "  width: " + picWidth);
 
         mySeekBarSpeed.setSpeed(speed);
-        mySeekBarSpeed.setSteering(steer -100);    // -100 um bei 0 grade aus zu fahren
+        mySeekBarSpeed.setSteering(steer);
         mySeekBarSpeed.refresh();
     }
 
@@ -231,5 +225,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         mySeekBarSpeed = sbs;
     }
 
-
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+    }
 }

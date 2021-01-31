@@ -44,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    //-----------------------------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
         seekBarSteering.setOnSeekBarChangeListener((new SeekBarSteering(orb)));
     }
 
-    //-----------------------------------------------------------------
     public void startCamera(View view) {
         seekBarSpeed.setProgress(1000);
         seekBarSteering.setProgress(105);
@@ -70,13 +68,10 @@ public class MainActivity extends AppCompatActivity {
         orb.setMotor(1, ORB.Mode.SPEED, 0, 0);
 
         Intent intent = new Intent(this, CamActivity.class);
-////        Intent intent = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+//        Intent intent = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
         startActivity(intent);
-
-
     }
 
-    //-----------------------------------------------------------------
     @Override
     public void onDestroy() {
         orb.close();
@@ -123,13 +118,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //-----------------------------------------------------------------
+
     //-----------------------------------------------------------------
+
     public void Drive(View view, int x) {
         orb.setMotor(0, ORB.Mode.SPEED, -x, 0);
         orb.setMotor(1, ORB.Mode.SPEED, +x, 0);
     }
 
-    //-----------------------------------------------------------------
     public void onClick_Stop(View view) {
         seekBarSpeed.setProgress(1000);
         seekBarSteering.setProgress(105);
