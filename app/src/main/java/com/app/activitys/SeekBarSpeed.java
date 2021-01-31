@@ -8,7 +8,7 @@ import com.app.activitys.ORB.ORB;
 //Diese Klasse wandelt den einkommenden SeekBar Wert in einen entsprechenden Wert für den ORB um
 public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
 
-    private ORB orb;
+    private final ORB orb;
     static private int steer;
     static private int speed;
     static TextView info;
@@ -30,9 +30,7 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
     //berechnet und setzt die entsprechende Geschwindkeit des ORBs
     public void refresh() {
         double steering = steer / 100.0;
-
-        int leftSpeed = 0;
-        int rightSpeed = 0;
+        int leftSpeed, rightSpeed;
 
         if (0 == steer) {
             leftSpeed =  (int) (speed * 0.9);
@@ -42,7 +40,7 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
             leftSpeed =  (int) (speed * (0.9 + (steering *9 / 10)) );
             rightSpeed = (int) (speed * (0.9 - (steering    / 10)) );
 
-        } else if (steer > 0) {
+        } else {
             leftSpeed =  (int) (speed * (0.9 + (steering    / 10)) );
             rightSpeed = (int) (speed * (0.9 - (steering *9 / 10)) );
         }

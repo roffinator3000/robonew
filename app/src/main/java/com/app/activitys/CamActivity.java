@@ -46,14 +46,10 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status) {
-                case BaseLoaderCallback.SUCCESS: {
-                    javaCameraView.enableView();
-                    break;
-                }
-                default: {
-                    super.onManagerConnected(status);
-                }
+            if (status == BaseLoaderCallback.SUCCESS) {
+                javaCameraView.enableView();
+            } else {
+                super.onManagerConnected(status);
             }
         }
     };
@@ -102,11 +98,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        switch (id) {
-            case R.id.action_connect:
-                BluetoothDeviceListActivity.startBluetoothDeviceSelect(this, 0);
-                break;
-            default:
+        if (id == R.id.action_connect) {
+            BluetoothDeviceListActivity.startBluetoothDeviceSelect(this, 0);
         }
         return super.onOptionsItemSelected(item);
     }
