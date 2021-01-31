@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
+import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -87,6 +88,11 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     @Override
     protected void onResume() {
         super.onResume();
+        if (OpenCVLoader.initDebug()) {
+            baseLoaderCallback.onManagerConnected(BaseLoaderCallback.SUCCESS);
+        } else {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, baseLoaderCallback);
+        }
     }
 
     @Override
