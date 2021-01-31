@@ -7,7 +7,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
 
-
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
@@ -21,17 +20,9 @@ import org.opencv.core.Scalar;
 import com.app.R;
 import com.app.activitys.Bluetooth.BluetoothDeviceListActivity;
 
-import static java.lang.Math.round;
-import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.bitwise_and;
 import static org.opencv.core.Core.bitwise_not;
-import static org.opencv.core.Core.bitwise_or;
-import static org.opencv.imgproc.Imgproc.COLOR_BGR2HSV;
-import static org.opencv.imgproc.Imgproc.COLOR_RGB2BGR;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
-import static org.opencv.imgproc.Imgproc.GaussianBlur;
-import static org.opencv.imgproc.Imgproc.HoughCircles;
-import static org.opencv.imgproc.Imgproc.circle;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.rectangle;
 
@@ -41,7 +32,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     JavaCameraView javaCameraView;
 
     Mat mRGBA, mBGR, hsvImg, hsvImgT;
-    Mat maskUninv, maskU, mask;
+    Mat mask;
     private boolean togglePic = true;
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
@@ -59,18 +50,6 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         }
     };
 
-    //    static
-//    {
-//
-//        if(OpenCVLoader.initDebug())
-//        {
-//            Log.d(TAG, "YESSSSSSSS");
-//        }
-//        else{
-//            Log.d(TAG, "NOOOOOOOOOOOOOOOOO");
-//        }
-//
-//    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,12 +88,8 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
-
-
     }
 
-
-    //---------------------------------------------------------------
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -133,13 +108,15 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         mBGR = new Mat(width, height, CvType.CV_8UC4);
         hsvImg = new Mat(width, height, CvType.CV_8UC4);
 
-        maskUninv = new Mat(width, height, CvType.CV_8UC4);
         mask = new Mat(width, height, CvType.CV_8UC4);
     }
 
     @Override
     public void onCameraViewStopped() {
         mRGBA.release();
+        mBGR.release();
+        hsvImg.release();
+        mask.release();
     }
 
     @Override
@@ -147,40 +124,39 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         if (togglePic) {
             mRGBA = inputFrame.rgba();
             cvtColor(mRGBA, hsvImg, COLOR_RGB2HSV);
-//            cvtColor(mRGBA, hsvImg, COLOR_BGR2HSV);
 
             Scalar scalarLow = getHsvScalar(205, 30, 5);
             Scalar scalarHigh = getHsvScalar(290, 400, 400);
 
             Core.inRange(hsvImg, scalarLow, scalarHigh, mask);
 
-
             //"schwerpunkt" der erkannten roten flächen berechnen
-            int h = mask.rows();
-            int w = mask.width();
-            int avH = 0;
-            int avW = 0;   //average height and width
-            int count = 1;
+            int picHeight = mask.rows();
+            int picWeight = mask.width();
+            int avgHeight = 0;
+            int avgWidth = 0;   // average height and width
+            int count = 1;      // init mit 1 um divideByZeroException zu vermeiden
 
-            for (int i = 0; i<h; i += 4) {
-                for (int ii = 0; ii<w; ii += 4) {
+            for (int i = 0; i< picHeight; i += 4) {
+                for (int ii = 0; ii< picWeight; ii += 4) {
                     if (0 < mask.get(i,ii)[0]) {
-                    avH += i;
-                    avW += ii;
+                    avgHeight += i;
+                    avgWidth += ii;
                     ++count;
                     }
                 }
             }
-            avH /= count;
-            avW /= count;
+
+            avgHeight /= count;
+            avgWidth /= count;
 
             // ecken um den schwerpunkt setzen
             double[] aPu = new double[2];
-            aPu[0] = avW - 30;
-            aPu[1] = avH - 30;
+            aPu[0] = avgWidth - 30;
+            aPu[1] = avgHeight - 30;
             Point lo = new Point(aPu);
-            aPu[0] = avW + 30;
-            aPu[1] = avH + 30;
+            aPu[0] = avgWidth + 30;
+            aPu[1] = avgHeight + 30;
             Point ru = new Point(aPu);
 
 
@@ -189,19 +165,19 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 //            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);    // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
 
 
-            Scalar green = getHsvScalar(110, 100, 100); // ein grünes
-            rectangle(hsvImg, lo, ru, green,3);          // quadrat über das erzeugt bild legen
+            Scalar green = getHsvScalar(70, 100, 100);   // ein gruenes
+            rectangle(hsvImg, lo, ru, green,3);           // quadrat über das erzeugte bild legen
         }
         togglePic = !togglePic;
         return hsvImg;
     }
 
     private Scalar getHsvScalar(double H, double S, double V) {
+        // konvertiert normale HSV-Scalare (360,100,100) in OpenCV-HSV-Scalare (255,255,255)
         return new Scalar(((int)(H/360.0*255.0)), ((int)(S*2.55)), ((int)(V*2.55)));
     }
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
-
     }
 }
