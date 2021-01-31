@@ -208,23 +208,23 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     private void drive(int avgWidht, int avgHeight){
         int steer = (int)( avgHeight * 200.0  / picHeight      -100 );     // -100 um bei 0 grade aus zu fahren -> zwischen -100 und 100
-        int speed = (int)( avgWidht  * 1000.0 / picWidth *(-1) +800 );     // -> zwischen -200 und 800
+        int speed = (int)( avgWidht  * 1000.0 / picWidth *(-1) +850 );     // -> zwischen -150 und 750
         // muss auf den kopf gestellt werden, da beim bild (0,0) links oben ist aber links unten benoetigt wird
 
         if (-100 > speed) {
-            speed = speed *2 /3;
+            speed = speed *3 /2;
         } else if (0 > speed) {
             speed = 0;
-        } else if (350 < speed) {
-            speed = 700;
+        } else if (400 < speed) {
+            speed = 800;
         } else {
-            speed *= 2;
+            speed = speed *7 /3;
         }
 
         System.out.println("speed: " + speed + "  steer: " + (steer) + "  height: " + picHeight + "  width: " + picWidth);
 
         mySeekBarSpeed.setSpeed(speed);
-        mySeekBarSpeed.setSteering(steer);
+        mySeekBarSpeed.setSteering(-steer);
         mySeekBarSpeed.refresh();
     }
 
