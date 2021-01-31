@@ -2,7 +2,6 @@ package com.app.activitys;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
@@ -11,7 +10,6 @@ import android.view.WindowManager;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
-import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -31,24 +29,21 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
     private static com.app.activitys.SeekBarSpeed mySeekBarSpeed;
 
-    private static String TAG = "CamActivity";
-    JavaCameraView javaCameraView;
+    private JavaCameraView javaCameraView;
 
-    Mat mRGBA, mBGR, hsvImg;
-    Mat mask;
-    Scalar scalarLow = getHsvScalar(205, 30, 5);
-    Scalar scalarHigh = getHsvScalar(290, 400, 400);
-    Scalar rectangleColor;
-    Point lo = new Point(0,0);
-    Point ru = new Point(60,60);
+    private Mat mRGBA, hsvImg, mask;
+    private Scalar scalarLow = getHsvScalar(205, 30, 5);
+    private Scalar scalarHigh = getHsvScalar(290, 400, 400);
+    private Scalar rectangleColor;
+    private Point lo = new Point(0,0);
+    private Point ru = new Point(60,60);
 
     private boolean togglePic = true;
-    int picWidth, picHeight;
-    int redCounter = 0;
-    int lastSeenAvgHeight = 50;
+    private int picWidth, picHeight;
+    private int redCounter = 0;
+    private int lastSeenAvgHeight = 320;
 
-    //-----------------------------------------------------------------
-    BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
+    private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
@@ -94,14 +89,6 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     @Override
     protected void onResume() {
         super.onResume();
-
-        if (OpenCVLoader.initDebug()) {
-            Log.d(TAG, "YESSSSSSSS");
-            baseLoaderCallback.onManagerConnected(BaseLoaderCallback.SUCCESS);
-        } else {
-            Log.d(TAG, "NOOOOOOOOOOOOOOOOO");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, baseLoaderCallback);
-        }
     }
 
     //-----------------------------------------------------------------
@@ -129,7 +116,6 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRGBA = new Mat(width, height, CvType.CV_8UC4);
-        mBGR = new Mat(width, height, CvType.CV_8UC4);
         hsvImg = new Mat(width, height, CvType.CV_8UC4);
 
         mask = new Mat(width, height, CvType.CV_8UC4);
@@ -139,7 +125,6 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     @Override
     public void onCameraViewStopped() {
         mRGBA.release();
-        mBGR.release();
         hsvImg.release();
         mask.release();
 
