@@ -38,12 +38,14 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
     Mat mask;
     Scalar scalarLow = getHsvScalar(205, 30, 5);
     Scalar scalarHigh = getHsvScalar(290, 400, 400);
-    Scalar rectColor;
-    Point lo = new Point(new double[] {0,0});
-    Point ru = new Point(new double[] {60,60});
+    Scalar rectangleColor;
+    Point lo = new Point(0,0);
+    Point ru = new Point(60,60);
 
-    int picWidth, picHeight;
     private boolean togglePic = true;
+    int picWidth, picHeight;
+    int redCounter = 0;
+    int lastSeenAvgHeight = 50;
 
     //-----------------------------------------------------------------
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(CamActivity.this) {
@@ -75,9 +77,7 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
         javaCameraView.setCvCameraViewListener(this);
 
         //Lässt Roboter zu beginn drehen um Objekt zu finden
-        mySeekBarSpeed.setSpeed(100);
-        mySeekBarSpeed.setSteering(-100);
-        mySeekBarSpeed.refresh();
+        mySeekBarSpeed.letItSpin(100);
     }
 
     //-----------------------------------------------------------------
@@ -186,16 +186,28 @@ public class CamActivity extends AppCompatActivity implements CameraBridgeViewBa
 
             if (50 < count) {    // neue fahrtrichtung nur setzen, wenn nennenswerte menge an punkten gefunden wurde
                 drive(avgWidth, avgHeight);
-                rectColor = new Scalar(20, 200, 50);   // für overlay-quadrat: funktioniert -> gruen
+                rectangleColor = new Scalar(20, 200, 50);    // für overlay-quadrat: funktioniert -> gruen
+                redCounter = 0;
+                lastSeenAvgHeight = avgHeight;
+
             } else {
-                rectColor = new Scalar(250, 30, 40);   // funktioniert nicht -> rot
+                rectangleColor = new Scalar(250, 30, 40);    // funktioniert nicht -> rot
+                if (35 < ++redCounter) {
+                    // wenn das objekt auch nach 100 frames blinden Folgens nicht gefunden wurde,
+                    // dreht ORB sich auf der Stelle in richtung der letzten sichtung
+                    if (lastSeenAvgHeight > picHeight/2) {
+                        mySeekBarSpeed.letItSpin(100);
+                    } else {
+                        mySeekBarSpeed.letItSpin(-100);
+                    }
+                }
             }
 
 //            bitwise_not(mask, mask);                         // zum debuggen, um *nicht* erkannte bereiche zu sehen
             bitwise_and(mRGBA, mRGBA, hsvImg, mask);           // farbbild auf filter legen
 //            cvtColor(hsvImg, hsvImg, COLOR_RGB2BGR);         // zum debuggen, da die erkennung auf falschfarben (rgb <-> bgr) läuft
 
-            rectangle(hsvImg, lo, ru, rectColor, 3);       // quadrat über das erzeugte bild legen
+            rectangle(hsvImg, lo, ru, rectangleColor, 3);       // quadrat über das erzeugte bild legen
         }
         togglePic = !togglePic;
         return hsvImg;

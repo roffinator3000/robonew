@@ -63,6 +63,11 @@ public class SeekBarSpeed implements SeekBar.OnSeekBarChangeListener{
         speed = speedNew;
     }
 
+    public void letItSpin(int speed){
+        orb.setMotor( 0, ORB.Mode.SPEED, speed, 0);
+        orb.setMotor( 1, ORB.Mode.SPEED, speed, 0);
+    }
+
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
     }
